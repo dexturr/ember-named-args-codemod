@@ -18,13 +18,13 @@ const readFileAsync = filePath => new Promise((resolve, reject) => {
   });
 });
 
-const fileExistsAsync = filePath => new Promise((resolve) => 
-  fs.access(filePath, fs.constants.F_OK, (err) => 
+const fileExistsAsync = filePath => new Promise(resolve =>
+  fs.access(filePath, fs.constants.F_OK, err =>
     resolve(!err)
   )
 );
 
-const writeFileAsync = (filePath, data) => new Promise((resolve, reject) => fs.writeFile(filePath, data, (err) => {
+const writeFileAsync = (filePath, data) => new Promise((resolve, reject) => fs.writeFile(filePath, data, err => {
   if (err) {
     reject(err);
   }
@@ -37,7 +37,7 @@ module.exports = class NamedArgsCodeShifter {
     this.componetsDirectory = `${this.rootDirectory}/components`;
     this.templatesDirectory = `${this.rootDirectory}/templates`;
     this.routeDirectory = `${this.rootDirectory}/routes`;
-    this.componentTemplatesDirectory = `${this.rootDirectory}/templates/components`
+    this.componentTemplatesDirectory = `${this.rootDirectory}/templates/components`;
     this.componetsDictionairy = {};
     this.propertyDictionairy = {};
     this.routePropertyDictionairy = {};
@@ -52,14 +52,14 @@ module.exports = class NamedArgsCodeShifter {
       const ast = recast.parse(fileText);
       let { propertyDictionairy } = this;
       recast.visit(ast, {
-        visitProperty: function({ value }) {
+        visitProperty({ value }) {
           if (!propertyDictionairy[componentName]) {
             propertyDictionairy[componentName] = [];
           }
           propertyDictionairy[componentName].push(value.key.name);
           value.key.name = `this.${value.key.name}`;
           return value;
-        }
+        },
       });
     } else {
       console.warn(`Could not find .js file for ${componentName}`);
@@ -82,7 +82,7 @@ module.exports = class NamedArgsCodeShifter {
   async replaceArguments(componentName) {
     const namedArguments = this.componetsDictionairy[componentName];
     const scopredArguments = this.propertyDictionairy[componentName] || [];
-    console.log(scopredArguments)
+    console.log(scopredArguments);
     // No sense building a whole AST and traversing it if we don't have any named arguments
     if (namedArguments.length || scopredArguments) {
       const fullPath = path.join(this.templatesDirectory, `components/${componentName}.hbs`);
@@ -93,8 +93,8 @@ module.exports = class NamedArgsCodeShifter {
           const isScoped = scopredArguments.includes(firstPart);
           const argumentName = node.original;
           const isThisArg = THIS_VARIABLES_IN_COMPONENT
-                              .map((variable) => node.original.startsWith(variable))
-                              .reduce((accumulator, currentValue) => accumulator || currentValue, false);
+            .map(variable => node.original.startsWith(variable))
+            .reduce((accumulator, currentValue) => accumulator || currentValue, false);
           if (isNamed && isScoped) {
             console.log(`Argument name ${argumentName} in component ${componentName} is both an argument and present on the JS file. This needs to be resolved manually.`);
           } else if (isNamed) {
@@ -111,12 +111,12 @@ module.exports = class NamedArgsCodeShifter {
     await this.performTransform(route, () => ({
       PathExpression(node) {
         const isThisArg = THIS_VARIABLES_IN_MODEL
-                            .map((variable) => node.original.startsWith(variable))
-                            .reduce((accumulator, currentValue) => accumulator || currentValue, false);
+          .map(variable => node.original.startsWith(variable))
+          .reduce((accumulator, currentValue) => accumulator || currentValue, false);
         if (isThisArg) {
           node.original = `this.${node.original}`;
         }
-      }
+      },
     }));
   }
 
@@ -146,7 +146,7 @@ module.exports = class NamedArgsCodeShifter {
       },
       BlockStatement(node) {
         findArgumentsInStatement(node);
-      }
+      },
     }));
   }
 
@@ -163,11 +163,11 @@ module.exports = class NamedArgsCodeShifter {
       return acc;
     }, {});
     const resolvedRoutes = routeTemplates.map(routeTemplate => path.resolve(routeTemplate));
-    
+
     const namedArgsPromises = allTemplates.map(this.findArgumentsInFiles, this);
     const thisArgsPromises = strippedFileNames.map(this.findScopedArguments, this);
     await Promise.all(namedArgsPromises.concat(thisArgsPromises));
-  
+
     const componentReplacePromised = strippedFileNames.map(this.replaceArguments, this);
     const routeReplacePromised = resolvedRoutes.map(this.replaceModelInRoute, this);
     await Promise.all(componentReplacePromised.concat(routeReplacePromised));

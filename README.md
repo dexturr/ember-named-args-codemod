@@ -10,4 +10,4 @@ Some actual tests
 
 Add cli
 
-Add eslint
+~~Add eslint~~
