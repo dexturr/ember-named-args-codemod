@@ -1,8 +1,8 @@
+#!/usr/bin/env node
 'use strict';
 const program = require('commander');
 const pkg = require('../package.json');
 const NamedArgsCodeShifter = require('../index');
-const path = require('path');
 
 program
   .version(pkg.version)
