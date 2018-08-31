@@ -14,9 +14,13 @@
     "mocha": "^5.2.0"
   },
   "dependencies": {
+    "commander": "^2.17.1",
     "ember-template-recast": "^1.2.0",
     "globby": "^8.0.1",
     "recast": "^0.15.3"
+  },
+  "bin": {
+    "named-args-codemod": "./bin/index.js"
   },
   "engines": {
     "node": "8.* || >= 10.*"

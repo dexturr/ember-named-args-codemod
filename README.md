@@ -8,6 +8,8 @@ Block arguments break it currently
 
 Some actual tests
 
-Add cli
+Seperate parts into clearer files
+
+~~Add cli~~
 
 ~~Add eslint~~

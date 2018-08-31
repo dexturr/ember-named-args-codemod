@@ -32,8 +32,10 @@ const writeFileAsync = (filePath, data) => new Promise((resolve, reject) => fs.w
 }));
 
 module.exports = class NamedArgsCodeShifter {
-  constructor() {
-    this.rootDirectory = './test-app/app';
+  constructor(rootDirectory, dryRun) {
+    this.rootDirectory = rootDirectory;
+    this.dryRun = dryRun;
+
     this.componetsDirectory = `${this.rootDirectory}/components`;
     this.templatesDirectory = `${this.rootDirectory}/templates`;
     this.routeDirectory = `${this.rootDirectory}/routes`;
@@ -41,7 +43,6 @@ module.exports = class NamedArgsCodeShifter {
     this.componetsDictionairy = {};
     this.propertyDictionairy = {};
     this.routePropertyDictionairy = {};
-    this.dryRun = false;
   }
 
   async findScopedArguments(componentName) {
@@ -82,7 +83,7 @@ module.exports = class NamedArgsCodeShifter {
   async replaceArguments(componentName) {
     const namedArguments = this.componetsDictionairy[componentName];
     const scopredArguments = this.propertyDictionairy[componentName] || [];
-    console.log(scopredArguments);
+
     // No sense building a whole AST and traversing it if we don't have any named arguments
     if (namedArguments.length || scopredArguments) {
       const fullPath = path.join(this.templatesDirectory, `components/${componentName}.hbs`);
