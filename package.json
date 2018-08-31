@@ -4,13 +4,15 @@
   "description": "Moves hbs files to using named args",
   "main": "index.js",
   "scripts": {
-    "test": "mocha tests/tests.js --timeout=50000"
+    "test": "mocha tests/tests.js --timeout=50000",
+    "lint": "eslint ."
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
     "eslint": "^5.4.0",
     "eslint-plugin-node": "^6.0.1",
+    "eslint-config-dexturr-node": "^0.0.1",
     "mocha": "^5.2.0"
   },
   "dependencies": {
