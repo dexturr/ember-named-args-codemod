@@ -83,9 +83,8 @@ module.exports = class NamedArgsCodeShifter {
   async replaceArguments(componentName) {
     const namedArguments = this.componetsDictionairy[componentName];
     const scopredArguments = this.propertyDictionairy[componentName] || [];
-
     // No sense building a whole AST and traversing it if we don't have any named arguments
-    if (namedArguments.length || scopredArguments) {
+    if ((namedArguments && namedArguments.length) || (scopredArguments && scopredArguments.length)) {
       const fullPath = path.join(this.templatesDirectory, `components/${componentName}.hbs`);
       await this.performTransform(fullPath, () => ({
         PathExpression(node) {
@@ -153,13 +152,14 @@ module.exports = class NamedArgsCodeShifter {
 
   async processFiles() {
     const componentsJsFilesPromise = globby(`${this.componetsDirectory}/**/*.js`);
+    const componentsHbsFilesPromise = globby(`${this.componentTemplatesDirectory}/**/*.hbs`);
     const allTemplatesPromise = globby(`${this.templatesDirectory}/**/*.hbs`);
     const routeTemplatesPromise = globby([`${this.templatesDirectory}/**/*.hbs`, `!${this.componentTemplatesDirectory}/**/*.hbs`]);
+    const [componentsJsFiles, componentsHbsFiles, allTemplates, routeTemplates] = await Promise.all([componentsJsFilesPromise, componentsHbsFilesPromise, allTemplatesPromise, routeTemplatesPromise]);
 
-    const [componentsJsFiles, allTemplates, routeTemplates] = await Promise.all([componentsJsFilesPromise, allTemplatesPromise, routeTemplatesPromise]);
-
+    const strippedTemplateNames = componentsHbsFiles.map(file => file.split('/templates/components/')[1].replace('.hbs', ''));
     const strippedFileNames = componentsJsFiles.map(file => file.split('app/components/')[1].replace('.js', ''));
-    this.componetsDictionairy = strippedFileNames.reduce((acc, cur) => {
+    this.componetsDictionairy = strippedTemplateNames.reduce((acc, cur) => {
       acc[cur] = [];
       return acc;
     }, {});
@@ -169,7 +169,7 @@ module.exports = class NamedArgsCodeShifter {
     const thisArgsPromises = strippedFileNames.map(this.findScopedArguments, this);
     await Promise.all(namedArgsPromises.concat(thisArgsPromises));
 
-    const componentReplacePromised = strippedFileNames.map(this.replaceArguments, this);
+    const componentReplacePromised = strippedTemplateNames.map(this.replaceArguments, this);
     const routeReplacePromised = resolvedRoutes.map(this.replaceModelInRoute, this);
     await Promise.all(componentReplacePromised.concat(routeReplacePromised));
   }
